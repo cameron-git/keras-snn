@@ -2,7 +2,7 @@ import jax
 from jax import numpy as jnp
 
 
-def spike_fn(surrogate="sigmoid"):
+def spike_fn(surrogate="sigmoid", **kwargs):
     """
     Returns a spiking activation function (Heaviside) with surrogate gradient based on the given surrogate.
 
@@ -24,10 +24,13 @@ def spike_fn(surrogate="sigmoid"):
         return sg(x), x
 
     if surrogate == "sigmoid":
+        if "alpha" in kwargs:
+            alpha = kwargs["alpha"]
 
         def sg_bwd(res, g):
             (x,) = res
-            return g * jax.nn.sigmoid(x) * (1 - jax.nn.sigmoid(x))
+            x = jax.nn.sigmoid(x)
+            return g * x * (1 - x) * alpha
 
     else:
         raise ValueError(f"Unknown surrogate: {surrogate}")

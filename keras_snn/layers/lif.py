@@ -1,7 +1,7 @@
 import keras
 from keras.layers import Layer
 
-from keras_snn.backend import activations
+from keras_snn import backend
 
 
 class LIF(Layer):
@@ -26,9 +26,10 @@ class LIF(Layer):
         self.v = 0.0
         self.th = th
         self.tau = tau
-        self.spike_fn = activations.spike_fn(surrogate, **kwargs)
+        self.spike_fn = backend.activations.spike_fn(surrogate, **kwargs)
 
     def __call__(self, x):
+        x = keras.ops.convert_to_tensor(x)
         self.v = self.v + (x - self.v) / self.tau
         x = self.spike_fn(self.v - self.th)
         self.v = self.v * (1 - x)
