@@ -1,1 +1,1 @@
-from .lif import LIF
+from .lif import LIFCell

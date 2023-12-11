@@ -3,8 +3,24 @@ from keras.layers import Layer
 
 from keras_snn import backend
 
+# class SNNCell(Layer):
+#     def __init__(self, layer, activation, **kwargs):
+#         super().__init__(**kwargs)
+#         self.layer = layer
+#         self.activation = activation
 
-class LIF(Layer):
+#         def build(self, input_shape):
+#             self.layer.build(input_shape)
+#             self.activation.build(input_shape)
+#             self.built = True
+
+#         def call(self, input_at_t, states_at_t):
+#             output_at_t = self.layer(input_at_t)
+#             output_at_t = self.activation(output_at_t)
+#             return output_at_t, states_at_t
+
+
+class LIFCell(Layer):
     """
     Leaky Integrate-and-Fire (LIF) neuron model.
 
@@ -21,25 +37,20 @@ class LIF(Layer):
         x (float): Output of the LIF neuron after applying the activation function.
     """
 
-    def __init__(self, th=1.0, tau=2.0, surrogate="sigmoid", **kwargs):
+    def __init__(self,  th=1.0, tau=2.0, surrogate="sigmoid", **kwargs):
         super().__init__()
-        self.v = 0.0
+        self.state_size = -1
         self.th = th
         self.tau = tau
         self.spike_fn = backend.activations.spike_fn(surrogate, **kwargs)
 
-    def __call__(self, x):
-        x = keras.ops.convert_to_tensor(x)
-        self.v = self.v + (x - self.v) / self.tau
-        x = self.spike_fn(self.v - self.th)
-        self.v = self.v * (1 - x)
-        return x
+    def build(self, input_shape):
+        self.built = True
 
-    def reset_states(self):
-        # Compatibility alias.
-        self.reset_state()
-
-    def reset_state(self):
-        if self.states is not None:
-            for v in self.states:
-                v.assign(keras.ops.zeros_like(v))
+    def call(self, x, v):
+        v_shape = v[0].shape
+        v = v[0].reshape(x.shape)
+        v = v + (x - v) / self.tau
+        x = self.spike_fn(v - self.th)
+        v = v * (1 - x)
+        return x, [v.reshape(v_shape)]
