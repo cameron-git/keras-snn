@@ -1,4 +1,9 @@
 import torch
+import torch.utils.cpp_extension
+
+
+
+
 
 
 def spike_fn(surrogate="sigmoid", **kwargs):
@@ -14,6 +19,14 @@ def spike_fn(surrogate="sigmoid", **kwargs):
     Raises:
         ValueError: If the given surrogate is unknown.
     """
+
+    torch.utils.cpp_extension.load(
+            name="warp_perspective",
+            sources=["./csrc/op.cpp"],
+            extra_ldflags=[],
+            is_python_module=False,
+            verbose=True
+        )
 
     class sg(torch.autograd.Function):
         @staticmethod
